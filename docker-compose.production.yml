@@ -1,0 +1,44 @@
+version: '3'
+
+volumes:
+  pg_data_production:
+  static_volume:
+  media_volume:
+
+services:
+  db:
+    image: postgres:13.10
+    restart: always
+    env_file: .env
+    volumes:
+      - pg_data_production:/var/lib/postgresql/data
+
+  backend:
+    image: galinash/kittygram_backend:latest
+    restart: always
+    env_file: .env
+    depends_on:
+      - db
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+
+  frontend:
+    image: galinash/kittygram_frontend:latest
+    restart: always
+    command: cp -r /app/build/. /static/
+    volumes:
+      - static_volume:/static
+
+  gateway:
+    image: galinash/kittygram_gateway:latest
+    restart: always
+    env_file: .env
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "9000:80"
+    volumes:
+      - static_volume:/static/
+      - media_volume:/media/
